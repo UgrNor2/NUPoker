@@ -1,0 +1,42 @@
+﻿- HandRank is stored in 32 bit int
+- Only the first 24 bits are used
+- The 24 bits is splitted into 6 4bits sections: HandType + 5Cards
+- Representation: {HandType}{FirstCard}{SecondCard}{ThirdCard}{FourthCard}{FifthCard}
+- Comparing HandRanks: The stronger will be the greater
+
+Hand Types
+-----------------------------------------------------------------
+HandType		Value	Value in binary
+-----------------------------------------------------------------
+High			0		0000
+Pair			1		0001
+TwoPairs		2		0010
+ThreeOfAkind	3		0011
+Straight		4		0100
+Flush			5		0101
+FullHouse		6		0110
+FourOfAKind		7		0111
+StraightFlush	8		1000
+
+
+Cards
+-----------------------------------------------------------------
+CardType	Value	Value in binary
+2			0		0000
+3			1		0001
+4			2		0010
+5			3		0011
+6			4		0100
+7			5		0101
+8			6		0110
+9			7		0111
+10			8		1000
+J			9		1001
+Q			10		1010
+K			11		1011
+A			12		1100
+
+
+Examples:
+0010 1100 0010 0101 0000 0000
+Two pairs with Ace and 4 (and with a 7 card)
