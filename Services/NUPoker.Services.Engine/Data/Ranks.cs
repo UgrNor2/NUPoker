@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NUPoker.Services.Engine.Data
 {
-    public enum Ranks
+    public enum Ranks : uint
     {
         Two = 0,
         Three = 1,

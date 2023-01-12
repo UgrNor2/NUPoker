@@ -11,7 +11,7 @@ HandType		Value	Value in binary
 High			0		0000
 Pair			1		0001
 TwoPairs		2		0010
-ThreeOfAkind	3		0011
+ThreeOfAKind	3		0011
 Straight		4		0100
 Flush			5		0101
 FullHouse		6		0110

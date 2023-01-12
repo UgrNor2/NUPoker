@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NUPoker.Services.Engine.Data
 {
-    public enum HandTypes
+    public enum HandTypes : uint
     {
         HighCard = 0,
         Pair = 1,
