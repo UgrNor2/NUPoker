@@ -11,6 +11,7 @@ namespace NUPoker.Services.Engine.Concrete
         private const int FIRST_CARD_SHIFT = 16;
         private const int SECOND_CARD_SHIFT = 12;
         private const int THIRD_CARD_SHIFT = 8;
+        private static int firstCardMask;
 
         public ulong CreateHand(int myCard1, int myCard2, int flopCard1, int flopCard2, int flopCard3, int turnCard = 52, int riverCard = 52)
         {
@@ -68,80 +69,121 @@ namespace NUPoker.Services.Engine.Concrete
             uint numberOfDifferentRanks = Tables.NumberOfBitsTable[ranks];
             uint numberOfDuplications = ((uint)(numberOfCards - numberOfDifferentRanks));
 
-            var handTypeModel = RecognizeHandType(numberOfDifferentRanks, numberOfDuplications, spadeHand, heartHand, clubHand, diamondHand, ranks);
-
-            switch(handTypeModel.HandType)
-            {
-                case HandTypes.HighCard: return GetHandRank_HighCard(ranks);
-                case HandTypes.Pair: return GetHandRank_Pair(spadeHand, heartHand, clubHand, diamondHand, ranks);
-                case HandTypes.TwoPairs: return GetHandRank_TwoPairs(spadeHand, heartHand, clubHand, diamondHand, ranks);
-                case HandTypes.ThreeOfAKind: return GetHandRank_ThreeOfAKind(spadeHand, heartHand, clubHand, diamondHand, ranks);
-                case HandTypes.Straight: return GetHandRank_Straight(ranks);
-                case HandTypes.Flush: return GetHandRank_Flush(((FlushHandTypeRecognitionModel)handTypeModel).FlushSuitHand);
-            }
-
-            throw new NotImplementedException();
+            return GetHandRank(numberOfDifferentRanks, numberOfDuplications, spadeHand, heartHand, clubHand, diamondHand, ranks);
         }
 
-        private static HandTypeRecognitionModel RecognizeHandType(uint numberOfDifferentRanks, uint numberOfDuplications, uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks)
+        public uint GetHandRank(Cards myCard1, Cards myCard2, Cards flopCard1, Cards flopCard2, Cards flopCard3, Cards turnCard = Cards.Empty, Cards riverCard = Cards.Empty)
         {
+            return GetHandRank(CreateHand(myCard1, myCard2, flopCard1, flopCard2, flopCard3, turnCard, riverCard));
+        }
+
+        public uint GetHandRank(int myCard1, int myCard2, int flopCard1, int flopCard2, int flopCard3, int turnCard = 52, int riverCard = 52)
+        {
+            return GetHandRank(CreateHand(myCard1, myCard2, flopCard1, flopCard2, flopCard3, turnCard, riverCard));
+        }
+
+        private static uint GetHandRank(uint numberOfDifferentRanks, uint numberOfDuplications, uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks)
+        {
+            uint retVal = 0;
+
             if(numberOfDifferentRanks >= 5)
             {
                 if (Tables.NumberOfBitsTable[spadeHand] >= 5)
                 {
                     if (Tables.StraightTable[spadeHand] != 0)
-                        return new HandTypeRecognitionModel { HandType = HandTypes.StraightFlush };
+                        return GetHandRank_StraightFlush(spadeHand);
                     else
-                        return new FlushHandTypeRecognitionModel { HandType = HandTypes.Flush, FlushSuitHand = spadeHand };
+                        retVal = GetHandRank_Flush(spadeHand);
                 }
-
-                if (Tables.NumberOfBitsTable[heartHand] >= 5)
+                else if (Tables.NumberOfBitsTable[heartHand] >= 5)
                 {
                     if (Tables.StraightTable[heartHand] != 0)
-                        return new HandTypeRecognitionModel { HandType = HandTypes.StraightFlush };
+                        return GetHandRank_StraightFlush(heartHand);
                     else
-                        return new FlushHandTypeRecognitionModel { HandType = HandTypes.Flush, FlushSuitHand = heartHand };
+                        retVal = GetHandRank_Flush(heartHand);
                 }
-
-                if (Tables.NumberOfBitsTable[clubHand] >= 5)
+                else if (Tables.NumberOfBitsTable[clubHand] >= 5)
                 {
                     if (Tables.StraightTable[clubHand] != 0)
-                        return new HandTypeRecognitionModel { HandType = HandTypes.StraightFlush };
+                        return GetHandRank_StraightFlush(clubHand);
                     else
-                        return new FlushHandTypeRecognitionModel { HandType = HandTypes.Flush, FlushSuitHand = clubHand };
+                        retVal = GetHandRank_Flush(clubHand);
                 }
-
-                if (Tables.NumberOfBitsTable[diamondHand] >= 5)
+                else if (Tables.NumberOfBitsTable[diamondHand] >= 5)
                 {
                     if (Tables.StraightTable[diamondHand] != 0)
-                        return new HandTypeRecognitionModel { HandType = HandTypes.StraightFlush };
+                        return GetHandRank_StraightFlush(diamondHand);
                     else
-                        return new FlushHandTypeRecognitionModel { HandType = HandTypes.Flush, FlushSuitHand = diamondHand };
+                        retVal = GetHandRank_Flush(diamondHand);
+                }
+                else if (Tables.StraightTable[ranks] != 0)
+                {
+                    retVal = GetHandRank_Straight(ranks);
                 }
 
-                if (Tables.StraightTable[ranks] != 0)
+                if(retVal != 0 && numberOfDuplications < 3)
                 {
-                    return new HandTypeRecognitionModel { HandType = HandTypes.Straight };
+                    return retVal;
                 }
             }
 
             switch (numberOfDuplications)
             {
-                case 0: return new HandTypeRecognitionModel { HandType = HandTypes.HighCard }; ;
-                case 1: return new HandTypeRecognitionModel { HandType = HandTypes.Pair }; ;
+                case 0: return GetHandRank_HighCard(ranks);
+                case 1: return GetHandRank_Pair(spadeHand, heartHand, clubHand, diamondHand, ranks);
                 case 2:
                     {
-                        var pair_cards_mask = ranks ^ (spadeHand ^ heartHand ^ clubHand ^ diamondHand);
-                        return pair_cards_mask != 0 ? new HandTypeRecognitionModel { HandType = HandTypes.TwoPairs } : new HandTypeRecognitionModel { HandType = HandTypes.ThreeOfAKind };
-                    }                 
+                        var pairCardsMask = ranks ^ (spadeHand ^ heartHand ^ clubHand ^ diamondHand);
+                        if(pairCardsMask != 0)
+                        {
+                            return GetHandRank_TwoPairs(spadeHand, heartHand, clubHand, diamondHand, ranks, pairCardsMask);
+                        }
+                        else
+                        {
+                            return GetHandRank_ThreeOfAKind(spadeHand, heartHand, clubHand, diamondHand, ranks);
+                        }                      
+                    }
+                default:
+                    {
+                        var fourCardsMask = spadeHand & heartHand & clubHand & diamondHand;
+                        if (fourCardsMask != 0)
+                        {
+                            return GetHandRank_FourOfAKind(fourCardsMask, ranks);
+                        }
+
+                        var pairCardsMask = ranks ^ (spadeHand ^ heartHand ^ clubHand ^ diamondHand);
+                        if (Tables.NumberOfBitsTable[pairCardsMask] != numberOfDuplications)
+                        {
+                            return GetHandRank_FullHouse(spadeHand, heartHand, clubHand, diamondHand, pairCardsMask);
+                        }
+
+                        if (retVal != 0)
+                        {
+                            return retVal;
+                        }
+                        else
+                        {
+                            uint top, second;
+
+                            var retval = (((uint)HandTypes.TwoPairs) << TYPE_SHIFT);
+                            top = Tables.TopCardTable[pairCardsMask];
+                            retval += (top << FIRST_CARD_SHIFT);
+                            second = Tables.TopCardTable[pairCardsMask ^ (1 << (int)top)];
+                            retval += (second << SECOND_CARD_SHIFT);
+                            retval += (uint)((Tables.TopCardTable[ranks ^ (1U << (int)top) ^ (1 << (int)second)]) << THIRD_CARD_SHIFT);
+                            return retval;
+                        }
+
+                        throw new InvalidOperationException("Unexpected error for getting the hand rank.");
+                    } 
             }
 
-            throw new NotImplementedException();
+            
         }
 
         private static uint GetHandRank_HighCard(uint ranks)
         {
-            return (((uint)HandTypes.HighCard) << TYPE_SHIFT) + Tables.TopFiveCardsTable[ranks];
+            return (((uint)HandTypes.HighCard) << TYPE_SHIFT) | Tables.TopFiveCardsTable[ranks];
         }
 
         private static uint GetHandRank_Pair(uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks)
@@ -160,14 +202,11 @@ namespace NUPoker.Services.Engine.Concrete
             // Then we do a BITWISE AND to make the fifth card bits 0000.
             var retValKickers = (uint)((Tables.TopFiveCardsTable[otherCards] >> 4) & 0xFFFFFFF0);
             
-            return retValType + retValPairCard + retValKickers;
+            return retValType | retValPairCard | retValKickers;
         }
 
-        private uint GetHandRank_TwoPairs(uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks)
+        private static uint GetHandRank_TwoPairs(uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks, uint pairCardsMask)
         {
-            // Get the pair cards, it will contain 2 bits only
-            var pairCardsMask = ranks ^ (spadeHand ^ heartHand ^ clubHand ^ diamondHand);
-
             // Get the other (not pair) cards' bits
             var otherCards = ranks ^ pairCardsMask;
 
@@ -176,20 +215,20 @@ namespace NUPoker.Services.Engine.Concrete
             var retValPairCards = Tables.TopFiveCardsTable[pairCardsMask] & 0x000FF000;
             var retValKicker = (uint)(Tables.TopCardTable[otherCards] << THIRD_CARD_SHIFT);
 
-            return retValType + retValPairCards + retValKicker;
+            return retValType | retValPairCards | retValKicker;
         }
 
-        private uint GetHandRank_ThreeOfAKind(uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks)
+        private static uint GetHandRank_ThreeOfAKind(uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks)
         {
             // Get the three of a kind card, it will contain 1 bit only
-            var threeCardMask = ((clubHand & diamondHand) | (heartHand & spadeHand)) & ((clubHand & heartHand) | (diamondHand & spadeHand));
+            var threeCardsMask = ((clubHand & diamondHand) | (heartHand & spadeHand)) & ((clubHand & heartHand) | (diamondHand & spadeHand));
 
             // Set ThreeOfAKind hand type, then set the ThreeOfAKind card to the first card place
             var retValType = (uint)HandTypes.ThreeOfAKind << TYPE_SHIFT;
-            var retValThreeOfAKindCard = (uint)Tables.TopCardTable[threeCardMask] << FIRST_CARD_SHIFT;
+            var retValThreeOfAKindCard = (uint)Tables.TopCardTable[threeCardsMask] << FIRST_CARD_SHIFT;
 
             // Get the other (not three of a kind) cards' bits
-            var otherCards = ranks ^ threeCardMask;
+            var otherCards = ranks ^ threeCardsMask;
 
             // Top card from others
             var topCard = (uint)Tables.TopCardTable[otherCards];
@@ -206,10 +245,10 @@ namespace NUPoker.Services.Engine.Concrete
             // Moved to the third card spot
             var retValSecondKickerCard = topCard << THIRD_CARD_SHIFT;
 
-            return retValType + retValThreeOfAKindCard + retValFirstKickerCard + retValSecondKickerCard;
+            return retValType | retValThreeOfAKindCard | retValFirstKickerCard | retValSecondKickerCard;
         }
 
-        private uint GetHandRank_Straight(uint ranks)
+        private static uint GetHandRank_Straight(uint ranks)
         {
             // The top card
             var topCard = (uint)Tables.StraightTable[ranks];
@@ -218,27 +257,49 @@ namespace NUPoker.Services.Engine.Concrete
             var retValType = (uint)HandTypes.Straight << TYPE_SHIFT;
             var retValTopCard = topCard << FIRST_CARD_SHIFT;
 
-            return retValType + retValTopCard;
+            return retValType | retValTopCard;
         }
 
-        private uint GetHandRank_Flush(uint flushSuitHand)
+        private static uint GetHandRank_Flush(uint flushSuitHand)
         {
             // Set Flush hand type, then get the top 5 cards
             var retValType = (uint)HandTypes.Flush << TYPE_SHIFT;
             var retValTopCards = Tables.TopFiveCardsTable[flushSuitHand];
 
-            return retValType + retValTopCards;
+            return retValType | retValTopCards;
         }
 
-        private class HandTypeRecognitionModel
+        private static uint GetHandRank_FullHouse(uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint pairCardsMask)
         {
-            public HandTypes HandType { get; init; }
+            // Get the three of a kind card, it will contain 1 bit only
+            var threeCardsMask = ((clubHand & diamondHand) | (heartHand & spadeHand)) & ((clubHand & heartHand) | (diamondHand & spadeHand));
+
+            var retvalType = ((uint)HandTypes.FullHouse) << TYPE_SHIFT;
+            var firstCardMask = (uint)Tables.TopCardTable[threeCardsMask];
+            var retValFirstCard = firstCardMask << FIRST_CARD_SHIFT;
+            var retValTypeAndFirst = retvalType | retValFirstCard;
+            var secondCardMask = ((pairCardsMask | threeCardsMask) ^ (1U << (int)firstCardMask));
+            var retValSecondCard = (uint)(Tables.TopCardTable[secondCardMask] << SECOND_CARD_SHIFT);
+
+            return retValTypeAndFirst | retValSecondCard;
         }
 
-        private class FlushHandTypeRecognitionModel : HandTypeRecognitionModel
+        private static uint GetHandRank_FourOfAKind(uint fourCardsMask, uint ranks)
         {
-            public uint FlushSuitHand { get; init; }
+            uint cardMask = Tables.TopCardTable[fourCardsMask];
+            var retValHandType = (uint)HandTypes.FourOfAKind << TYPE_SHIFT;
+            var retValFirstCard = cardMask << FIRST_CARD_SHIFT;
+            var retValSecondCard = (uint)(Tables.TopCardTable[ranks ^ (1UL << (int)cardMask)]) << SECOND_CARD_SHIFT;
+            return retValHandType | retValFirstCard | retValSecondCard;
         }
 
+        private static uint GetHandRank_StraightFlush(uint flushSuitHand)
+        {
+            // Set Straight Flush hand type, then get the top 5 cards
+            var retValType = (uint)HandTypes.StraightFlush << TYPE_SHIFT;
+            var retValTopCards = (uint)Tables.StraightTable[flushSuitHand] << FIRST_CARD_SHIFT;
+
+            return retValType | retValTopCards;
+        }
     }
 }

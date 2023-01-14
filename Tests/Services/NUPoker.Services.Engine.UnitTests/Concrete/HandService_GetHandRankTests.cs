@@ -256,5 +256,95 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
             // Then
             Assert.AreEqual(expectedHandRank, handRank);
         }
+
+        [TestMethod]
+        public void ReturnsHandRankForFullHouse()
+        {
+            // Given
+            Cards myCard1 = Cards.AceClubs;
+            Cards myCard2 = Cards.AceHearts;
+            Cards flopCard1 = Cards.AceSpades;
+            Cards flopCard2 = Cards.JackClubs;
+            Cards flopCard3 = Cards.JackDiamonds;
+            Cards turnCard = Cards.NineClubs;
+            Cards riverCard = Cards.KingDiamonds;
+
+            ulong hand = (ulong)0x1 << (int)myCard1 |
+                         (ulong)0x1 << (int)myCard2 |
+                         (ulong)0x1 << (int)flopCard1 |
+                         (ulong)0x1 << (int)flopCard2 |
+                         (ulong)0x1 << (int)flopCard3 |
+                         (ulong)0x1 << (int)turnCard |
+                         (ulong)0x1 << (int)riverCard;
+
+            uint expectedHandRank = 0x006c9000;
+
+            // When
+            var service = CreateHandService();
+            var handRank = service.GetHandRank(hand);
+
+            // Then
+            Assert.AreEqual(expectedHandRank, handRank);
+        }
+
+        [TestMethod]
+        public void ReturnsHandRankForFourOfAKind()
+        {
+            // Given
+            Cards myCard1 = Cards.AceClubs;
+            Cards myCard2 = Cards.AceHearts;
+            Cards flopCard1 = Cards.AceSpades;
+            Cards flopCard2 = Cards.JackClubs;
+            Cards flopCard3 = Cards.SevenClubs;
+            Cards turnCard = Cards.NineClubs;
+            Cards riverCard = Cards.AceDiamonds;
+
+            ulong hand = (ulong)0x1 << (int)myCard1 |
+                         (ulong)0x1 << (int)myCard2 |
+                         (ulong)0x1 << (int)flopCard1 |
+                         (ulong)0x1 << (int)flopCard2 |
+                         (ulong)0x1 << (int)flopCard3 |
+                         (ulong)0x1 << (int)turnCard |
+                         (ulong)0x1 << (int)riverCard;
+
+            uint expectedHandRank = 0x007c9000;
+
+            // When
+            var service = CreateHandService();
+            var handRank = service.GetHandRank(hand);
+
+            // Then
+            Assert.AreEqual(expectedHandRank, handRank);
+        }
+
+        [TestMethod]
+        public void ReturnsHandRankForStraightFlush()
+        {
+            // Given
+            Cards myCard1 = Cards.AceClubs;
+            Cards myCard2 = Cards.TenClubs;
+            Cards flopCard1 = Cards.FiveSpades;
+            Cards flopCard2 = Cards.JackClubs;
+            Cards flopCard3 = Cards.QueenClubs;
+            Cards turnCard = Cards.NineClubs;
+            Cards riverCard = Cards.KingClubs;
+
+            ulong hand = (ulong)0x1 << (int)myCard1 |
+                         (ulong)0x1 << (int)myCard2 |
+                         (ulong)0x1 << (int)flopCard1 |
+                         (ulong)0x1 << (int)flopCard2 |
+                         (ulong)0x1 << (int)flopCard3 |
+                         (ulong)0x1 << (int)turnCard |
+                         (ulong)0x1 << (int)riverCard;
+
+            uint expectedHandRank = 0x008c0000;
+
+            // When
+            var service = CreateHandService();
+            var handRank = service.GetHandRank(hand);
+
+            // Then
+            Assert.AreEqual(expectedHandRank, handRank);
+        }
     }
 }

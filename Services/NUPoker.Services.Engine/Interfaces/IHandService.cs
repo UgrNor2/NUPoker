@@ -40,5 +40,31 @@ namespace NUPoker.Services.Engine.Interfaces
         /// <param name="hand">Hand (From CreateHand)</param>
         /// <returns>Hand rank</returns>
         uint GetHandRank(ulong hand);
+
+        /// <summary>
+        /// Returns the hand rank for a hand representation
+        /// </summary>
+        /// <param name="myCard1">My first card</param>
+        /// <param name="myCard2">My second card</param>
+        /// <param name="flopCard1">First flop card</param>
+        /// <param name="flopCard2">Second flop card</param>
+        /// <param name="flopCard3">Third flop card</param>
+        /// <param name="turnCard">Turn card</param>
+        /// <param name="riverCard">River card</param>
+        /// <returns>Hand rank</returns>
+        uint GetHandRank(Cards myCard1, Cards myCard2, Cards flopCard1, Cards flopCard2, Cards flopCard3, Cards turnCard = Cards.Empty, Cards riverCard = Cards.Empty);
+
+        /// <summary>
+        /// Returns the hand rank for a hand representation
+        /// </summary>
+        /// <param name="myCard1">My first card</param>
+        /// <param name="myCard2">My second card</param>
+        /// <param name="flopCard1">First flop card</param>
+        /// <param name="flopCard2">Second flop card</param>
+        /// <param name="flopCard3">Third flop card</param>
+        /// <param name="turnCard">Turn card</param>
+        /// <param name="riverCard">River card</param>
+        /// <returns>Hand rank</returns>
+        uint GetHandRank(int myCard1, int myCard2, int flopCard1, int flopCard2, int flopCard3, int turnCard = 52, int riverCard = 52);
     }
 }
