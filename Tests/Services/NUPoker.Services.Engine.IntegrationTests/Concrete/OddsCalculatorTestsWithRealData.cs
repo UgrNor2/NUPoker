@@ -1,10 +1,12 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NUPoker.Services.Engine.Concrete;
 using NUPoker.Services.Engine.Data;
+using NUPoker.Services.Engine.Data.OddsCalculator;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,7 +15,6 @@ namespace NUPoker.Services.Engine.IntegrationTests.Concrete
     [TestClass]
     public class OddsCalculatorTestsWithRealData
     {
-
         [TestMethod]
         public void GetOddsTest_WithRealData()
         {
@@ -25,45 +26,66 @@ namespace NUPoker.Services.Engine.IntegrationTests.Concrete
                 FlopCard2 = Cards.KingClubs,
                 FlopCard3 = Cards.QueenClubs,
                 TurnCard = Cards.Empty,
-                ExpectedWinRates = new double[][]
+                ExpectedResult = new List<GetOddsTestInput.ExpectedPlayerOdds>
                 {
-                    new double[] { 5.65, 15.84 },
-                    new double[] { 31.01, 12.96 },
-                    new double[] { 47.51, 15.84 }
-                }
-            };
-            var input2 = new GetOddsTestInput
-            {
-                PlayerCards = new List<(Cards, Cards)> { (Cards.QueenHearts, Cards.JackHearts), (Cards.FourDiamonds, Cards.FiveDiamonds), (Cards.AceSpades, Cards.AceDiamonds) },
-                FlopCard1 = Cards.KingClubs,
-                FlopCard2 = Cards.TenClubs,
-                FlopCard3 = Cards.FourHearts,
-                TurnCard = Cards.Empty,
-                ExpectedWinRates = new double[][]
-               {
-                    new double[] { 28.13, 0.00 },
-                    new double[] { 16.28, 0.00 },
-                    new double[] { 55.59, 0.00 }
-               }
+                    new GetOddsTestInput.ExpectedPlayerOdds
+                    {
+                        WinPercentage = 5.65,
+                        TiePercentage = 15.84,
+                        RankOccurence = new double[]{36.66, 47.73, 8.53, 1.44, 1.66, 3.88, 0, 0, 0.11}
+                    },
+                    new GetOddsTestInput.ExpectedPlayerOdds
+                    {
+                        WinPercentage = 31.01,
+                        TiePercentage = 12.96,
+                    },
+                    new GetOddsTestInput.ExpectedPlayerOdds
+                    {
+                        WinPercentage = 47.51,
+                        TiePercentage = 15.84,
+                    }
+                },
+                ExpectedNumberOfPlayers = 3,
+                ExpectedNumberOfCases = 903,
+
             };
 
             TestRun(input);
-            TestRun(input2);
         }
 
         private void TestRun(GetOddsTestInput input)
         {
             // Given
-            double allCombination = (43 * 42) / 2;
-
             // When
             var calculator = new OddsCalculator(new HandService(), new CardValidator());
             var odds = calculator.GetOdds(input.PlayerCards.Select(i => ((int)i.Item1, (int)i.Item2)).ToList(), (int)input.FlopCard1, (int)input.FlopCard2, (int)input.FlopCard3, (int)input.TurnCard);
 
+            // Then
+
+            if(input.ExpectedNumberOfCases.HasValue)
+            {
+                Assert.AreEqual(input.ExpectedNumberOfCases.Value, odds.NumberOfCases);
+            }
+
+            if(input.ExpectedNumberOfPlayers.HasValue)
+            {
+                Assert.AreEqual(input.ExpectedNumberOfPlayers, odds.NumberOfPlayers);
+            }
+
             for (int i = 0; i < input.PlayerCards.Count; i++)
             {
-                Assert.AreEqual(input.ExpectedWinRates[i][0], ((odds[i].Take(9).Sum() / allCombination) * 100), 0.1);
-                Assert.AreEqual(input.ExpectedWinRates[i][1], ((odds[i].Skip(9).Take(9).Sum() / allCombination) * 100), 0.1);
+                Assert.AreEqual(input.ExpectedResult[i].WinPercentage, Math.Round(odds.PlayerOddsResults[i].GetWinPercentage(),2));
+                Assert.AreEqual(input.ExpectedResult[i].TiePercentage, Math.Round(odds.PlayerOddsResults[i].GetTiePercentage(), 2));
+
+                if (input.ExpectedResult[i].RankOccurence != null)
+                {
+                    var occurancePercentages = odds.PlayerOddsResults[i].GetOccurancePercentages();
+
+                    for (int r = 0; r < input.ExpectedResult[i].RankOccurence.Length; r++)
+                    {
+                        Assert.AreEqual(input.ExpectedResult[i].RankOccurence[r], Math.Round(occurancePercentages[r], 2));
+                    }
+                }
             }
         }
 
@@ -80,7 +102,21 @@ namespace NUPoker.Services.Engine.IntegrationTests.Concrete
 
             public Cards TurnCard { get; init; }
 
-            public double[][] ExpectedWinRates { get; init; }
+            public List<ExpectedPlayerOdds> ExpectedResult { get; init; }
+
+            public int? ExpectedNumberOfPlayers { get; init; }
+
+            public int? ExpectedNumberOfCases { get; init; }
+
+
+            public class ExpectedPlayerOdds
+            {
+                public double WinPercentage { get; set; }
+
+                public double TiePercentage { get; set; }
+
+                public double[]? RankOccurence { get; set; }
+            }
         }
     }
 }

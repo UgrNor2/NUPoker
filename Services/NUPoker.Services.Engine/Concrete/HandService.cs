@@ -11,7 +11,6 @@ namespace NUPoker.Services.Engine.Concrete
         private const int FIRST_CARD_SHIFT = 16;
         private const int SECOND_CARD_SHIFT = 12;
         private const int THIRD_CARD_SHIFT = 8;
-        private static int firstCardMask;
 
         public ulong CreateHand(int myCard1, int myCard2, int flopCard1, int flopCard2, int flopCard3, int turnCard = 52, int riverCard = 52)
         {
