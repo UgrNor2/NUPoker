@@ -1,18 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NUPoker.Services.Engine.Concrete;
-using NUPoker.Services.Engine.Data;
-using NUPoker.Services.Engine.Data.OddsCalculator;
 using NUPoker.Services.Engine.Interfaces;
 using NUPoker.Services.Engine.UnitTests.Exception;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NUPoker.Services.Engine.UnitTests.Concrete
 {
@@ -22,6 +14,7 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
         private MockRepository _mockRepository = new MockRepository(MockBehavior.Strict);
         private Mock<IHandService> _handService = new Mock<IHandService>();
         private Mock<ICardValidator> _cardValidator = new Mock<ICardValidator>();
+        private Mock<IBoardEnumerator> _boardEnumerator = new Mock<IBoardEnumerator>();
 
         [TestInitialize]
         public void Init()
@@ -29,6 +22,7 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
             _mockRepository = new MockRepository(MockBehavior.Strict);
             _handService = _mockRepository.Create<IHandService>();
             _cardValidator = _mockRepository.Create<ICardValidator>();
+            _boardEnumerator = _mockRepository.Create<IBoardEnumerator>();
         }
 
         [TestCleanup]
@@ -39,7 +33,7 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
 
         private OddsCalculator CreateOddsCalculator()
         {
-            return new OddsCalculator(_handService.Object, _cardValidator.Object);
+            return new OddsCalculator(_handService.Object, _cardValidator.Object, _boardEnumerator.Object);
         }
 
         [TestMethod]
@@ -99,6 +93,9 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
             _handService.Setup(m => m.GetHandRank(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
                         .Throws(new ExpectedTestException());
 
+            _boardEnumerator.Setup(m => m.GetAllPossibleBoards(It.IsAny<List<int>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                            .Returns(new List<(int, int, int, int, int)> { (1,2,3,4,5)});                            
+
             // When
             var calculator = CreateOddsCalculator();
             Assert.ThrowsException<ExpectedTestException>(() => calculator.GetOdds(new List<(int, int)> { (0, 1), (2, 3), (4, 5) }, 6, 7, 8, 9));
@@ -124,6 +121,9 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
 
             _handService.Setup(m => m.GetHandRank(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
                         .Throws(new ExpectedTestException());
+
+            _boardEnumerator.Setup(m => m.GetAllPossibleBoards(It.IsAny<List<int>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                           .Returns(new List<(int, int, int, int, int)> { (1, 2, 3, 4, 5) });
 
             // When
             var calculator = CreateOddsCalculator();
@@ -151,6 +151,9 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
             _handService.Setup(m => m.GetHandRank(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
                         .Throws(new ExpectedTestException());
 
+            _boardEnumerator.Setup(m => m.GetAllPossibleBoards(It.IsAny<List<int>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                           .Returns(new List<(int, int, int, int, int)> { (1, 2, 3, 4, 5) });
+
             // When
             var calculator = CreateOddsCalculator();
             Assert.ThrowsException<ExpectedTestException>(() => calculator.GetOdds(new List<(int, int)> { (0, 1), (2, 3), (4, 5) }, 6, 7));
@@ -175,6 +178,9 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
 
             _handService.Setup(m => m.GetHandRank(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
                         .Throws(new ExpectedTestException());
+
+            _boardEnumerator.Setup(m => m.GetAllPossibleBoards(It.IsAny<List<int>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                           .Returns(new List<(int, int, int, int, int)> { (1, 2, 3, 4, 5) });
 
             // When
             var calculator = CreateOddsCalculator();
@@ -201,6 +207,9 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
             _handService.Setup(m => m.GetHandRank(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
                         .Throws(new ExpectedTestException());
 
+            _boardEnumerator.Setup(m => m.GetAllPossibleBoards(It.IsAny<List<int>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                           .Returns(new List<(int, int, int, int, int)> { (1, 2, 3, 4, 5) });
+
             // When
             var calculator = CreateOddsCalculator();
             Assert.ThrowsException<ExpectedTestException>(() => calculator.GetOdds(new List<(int, int)> { (0, 1), (2, 3), (4, 5) }));
@@ -209,71 +218,5 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
             _cardValidator.Verify(m => m.ThrowArgumentExceptionIfCardIsOutOfRange(It.IsAny<int>(), It.IsAny<bool>()), Times.Exactly(10));
             _cardValidator.Verify(m => m.ThrowArgumentExceptionIfCardIsOutOfRange(52, true), Times.Exactly(4));
         }
-
-        //[TestMethod]
-        //public void GetOddsTest()
-        //{
-        //    // Given
-        //    List<(int, int)> playerCards = new List<(int, int)> { ((int)Cards.AceClubs, (int)Cards.AceDiamonds), ((int)Cards.KingClubs, (int)Cards.KingDiamonds), ((int)Cards.JackClubs, (int)Cards.JackDiamonds) };
-        //    int flopCard1 = (int)Cards.EightDiamonds;
-        //    int flopCard2 = (int)Cards.EightHearts;
-        //    int flopCard3 = (int)Cards.EightSpades;
-
-        //    Random rnd = new Random();
-
-        //    int[][] expectedNumberOfOccurences = new int[3][];
-        //    int[][] expectedNumberOfWins = new int[3][];
-        //    int[][] expectedNumberOfTies = new int[3][];
-        //    int expectedNumberOfPlayers = 3;
-        //    int expectedNumberOfCases = 903;
-
-        //    int winningHandType = 0;
-        //    int winningPlayer = 0;
-        //    uint winningHandRank = 0;
-        //    var losingHandRank = (uint)0x000b9752;
-
-        //    _cardValidator.Setup(m => m.ThrowArgumentExceptionIfCardIsOutOfRange(It.IsAny<int>(), It.IsAny<bool>()));
-
-        //    _handService.Setup(m => m.GetHandRank(It.IsAny<int>(), It.IsAny<int>(), (int)Cards.EightDiamonds, (int)Cards.EightHearts, (int)Cards.EightSpades, It.IsAny<int>(), It.IsAny<int>()))
-        //                .Returns((int playerCard1, int playerCard2, int flopCard1, int flopCard2, int flopCard3, int turnCard, int riverCard) =>
-        //                {
-        //                    if (playerCard1 == (int)Cards.AceClubs && playerCard2 == (int)Cards.AceDiamonds)
-        //                    {
-        //                        // New turn and river variance and do rng who wins it, then store it
-        //                        winningHandType = rnd.Next(0, 8);
-        //                        winningPlayer = rnd.Next(0, 2);
-        //                        winningHandRank = (uint)(winningHandType << 20) | (uint)0x000c9752;
-
-        //                        expectedNumberOfWins[winningPlayer][winningHandType]++;
-
-        //                        return winningPlayer == 0 ? winningHandRank : losingHandRank;
-        //                    }
-        //                    else if (playerCard1 == (int)Cards.KingClubs && playerCard2 == (int)Cards.KingDiamonds)
-        //                    {
-        //                        return winningPlayer == 1 ? winningHandRank : losingHandRank;
-        //                    }
-        //                    else if (playerCard1 == (int)Cards.JackClubs && playerCard2 == (int)Cards.JackDiamonds)
-        //                    {
-        //                        return winningPlayer == 2 ? winningHandRank : losingHandRank;
-        //                    }
-
-        //                    throw new System.Exception("Test error");
-        //                });
-
-        //    // When
-        //    var calculator = CreateOddsCalculator();
-        //    var odds = calculator.GetOdds(playerCards, flopCard1, flopCard2, flopCard3);
-
-        //    // Then
-        //    Assert.AreEqual(expected.Length, odds.Length);
-        //    for (int i = 0; i < expected.Length; i++)
-        //    {
-        //        Assert.AreEqual(expected[i].Length, odds[i].Length);
-        //        for (int j = 0; j < expected[i].Length; j++)
-        //        {
-        //            Assert.AreEqual(expected[i][j], odds[i][j]);
-        //        }
-        //    }
-        //}
     }
 }

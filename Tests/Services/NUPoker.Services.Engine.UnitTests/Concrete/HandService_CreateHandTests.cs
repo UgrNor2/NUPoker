@@ -224,7 +224,7 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
 
             // When
             var handService = CreateHandService();
-            var handValue = handService.CreateHand(myCard1, myCard2, flopCard1, flopCard2, flopCard3);
+            var handValue = handService.CreateHand((int)myCard1, (int)myCard2, (int)flopCard1, (int)flopCard2, (int)flopCard3);
 
             // Then
             Assert.AreEqual(expectedHandValue, handValue);
@@ -250,7 +250,7 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
 
             // When
             var handService = CreateHandService();
-            var handValue = handService.CreateHand(myCard1, myCard2, flopCard1, flopCard2, flopCard3, turnCard);
+            var handValue = handService.CreateHand((int)myCard1, (int)myCard2, (int)flopCard1, (int)flopCard2, (int)flopCard3, (int)turnCard);
 
             // Then
             Assert.AreEqual(expectedHandValue, handValue);
@@ -278,7 +278,7 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
 
             // When
             var handService = CreateHandService();
-            var handValue = handService.CreateHand(myCard1, myCard2, flopCard1, flopCard2, flopCard3, turnCard, riverCard);
+            var handValue = handService.CreateHand((int)myCard1, (int)myCard2, (int)flopCard1, (int)flopCard2, (int)flopCard3, (int)turnCard, (int)riverCard);
 
             // Then
             Assert.AreEqual(expectedHandValue, handValue);

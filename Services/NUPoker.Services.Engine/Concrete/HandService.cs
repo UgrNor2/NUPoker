@@ -49,11 +49,6 @@ namespace NUPoker.Services.Engine.Concrete
             }
         }
 
-        public ulong CreateHand(Cards myCard1, Cards myCard2, Cards flopCard1, Cards flopCard2, Cards flopCard3, Cards turnCard = Cards.Empty, Cards riverCard = Cards.Empty)
-        {
-            return CreateHand((int)myCard1, (int)myCard2, (int)flopCard1, (int)flopCard2, (int)flopCard3, (int)turnCard, (int)riverCard);
-        }
-
         public uint GetHandRank(ulong hand)
         {
             uint spadeHand = (uint)(hand & 0x1FFFUL); //Only spade cards in 13 bit
@@ -69,11 +64,6 @@ namespace NUPoker.Services.Engine.Concrete
             uint numberOfDuplications = ((uint)(numberOfCards - numberOfDifferentRanks));
 
             return GetHandRank(numberOfDifferentRanks, numberOfDuplications, spadeHand, heartHand, clubHand, diamondHand, ranks);
-        }
-
-        public uint GetHandRank(Cards myCard1, Cards myCard2, Cards flopCard1, Cards flopCard2, Cards flopCard3, Cards turnCard = Cards.Empty, Cards riverCard = Cards.Empty)
-        {
-            return GetHandRank(CreateHand(myCard1, myCard2, flopCard1, flopCard2, flopCard3, turnCard, riverCard));
         }
 
         public uint GetHandRank(int myCard1, int myCard2, int flopCard1, int flopCard2, int flopCard3, int turnCard = 52, int riverCard = 52)
@@ -92,37 +82,32 @@ namespace NUPoker.Services.Engine.Concrete
                     if (Tables.StraightTable[spadeHand] != 0)
                         return GetHandRank_StraightFlush(spadeHand);
                     else
-                        retVal = GetHandRank_Flush(spadeHand);
+                        return GetHandRank_Flush(spadeHand);
                 }
                 else if (Tables.NumberOfBitsTable[heartHand] >= 5)
                 {
                     if (Tables.StraightTable[heartHand] != 0)
                         return GetHandRank_StraightFlush(heartHand);
                     else
-                        retVal = GetHandRank_Flush(heartHand);
+                        return GetHandRank_Flush(heartHand);
                 }
                 else if (Tables.NumberOfBitsTable[clubHand] >= 5)
                 {
                     if (Tables.StraightTable[clubHand] != 0)
                         return GetHandRank_StraightFlush(clubHand);
                     else
-                        retVal = GetHandRank_Flush(clubHand);
+                        return  GetHandRank_Flush(clubHand);
                 }
                 else if (Tables.NumberOfBitsTable[diamondHand] >= 5)
                 {
                     if (Tables.StraightTable[diamondHand] != 0)
                         return GetHandRank_StraightFlush(diamondHand);
                     else
-                        retVal = GetHandRank_Flush(diamondHand);
+                        return GetHandRank_Flush(diamondHand);
                 }
                 else if (Tables.StraightTable[ranks] != 0)
                 {
-                    retVal = GetHandRank_Straight(ranks);
-                }
-
-                if(retVal != 0 && numberOfDuplications < 3)
-                {
-                    return retVal;
+                    return GetHandRank_Straight(ranks);
                 }
             }
 
@@ -156,28 +141,11 @@ namespace NUPoker.Services.Engine.Concrete
                             return GetHandRank_FullHouse(spadeHand, heartHand, clubHand, diamondHand, pairCardsMask);
                         }
 
-                        if (retVal != 0)
-                        {
-                            return retVal;
-                        }
-                        else
-                        {
-                            uint top, second;
-
-                            var retval = (((uint)HandTypes.TwoPairs) << TYPE_SHIFT);
-                            top = Tables.TopCardTable[pairCardsMask];
-                            retval += (top << FIRST_CARD_SHIFT);
-                            second = Tables.TopCardTable[pairCardsMask ^ (1 << (int)top)];
-                            retval += (second << SECOND_CARD_SHIFT);
-                            retval += (uint)((Tables.TopCardTable[ranks ^ (1U << (int)top) ^ (1 << (int)second)]) << THIRD_CARD_SHIFT);
-                            return retval;
-                        }
+                        return GetHandRank_TwoPairs(ranks, pairCardsMask);
 
                         throw new InvalidOperationException("Unexpected error for getting the hand rank.");
-                    } 
+                    }
             }
-
-            
         }
 
         private static uint GetHandRank_HighCard(uint ranks)
@@ -215,6 +183,19 @@ namespace NUPoker.Services.Engine.Concrete
             var retValKicker = (uint)(Tables.TopCardTable[otherCards] << THIRD_CARD_SHIFT);
 
             return retValType | retValPairCards | retValKicker;
+        }
+
+        private static uint GetHandRank_TwoPairs(uint ranks, uint pairCardsMask)
+        {
+            uint top, second;
+
+            var retval = (((uint)HandTypes.TwoPairs) << TYPE_SHIFT);
+            top = Tables.TopCardTable[pairCardsMask];
+            retval += (top << FIRST_CARD_SHIFT);
+            second = Tables.TopCardTable[pairCardsMask ^ (1 << (int)top)];
+            retval += (second << SECOND_CARD_SHIFT);
+            retval += (uint)((Tables.TopCardTable[ranks ^ (1U << (int)top) ^ (1 << (int)second)]) << THIRD_CARD_SHIFT);
+            return retval;
         }
 
         private static uint GetHandRank_ThreeOfAKind(uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks)
