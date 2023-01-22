@@ -2,6 +2,13 @@
 {
     public class PlayerOddsResult
     {
+        private double[]? _occurancePercentages = null;
+        private double? _winPercentage = null;
+        private double? _tiePercentage = null;
+        private int? _totalNumberOfOccurences = null;
+        private int? _totalNumberOfWins = null;
+        private int? _totalNumberOfTies = null;
+
         public PlayerOddsResult()
         {
             NumberOfHandOccurences = new int[9];
@@ -15,18 +22,83 @@
 
         public int[] NumberOfTies { get; init; }
 
-        public double[] GetOccurancePercentages() => NumberOfHandOccurences.Select(x => (double)x / TotalHandOccurances() * 100).ToArray();
+        public double[] OccurancePercentages
+        {
+            get
+            {
+                if(_occurancePercentages == null)
+                {
+                    _occurancePercentages = NumberOfHandOccurences.Select(x => (double)x / TotalNumberOfOccurences * 100).ToArray();
+                }
 
-        public double GetWinPercentage() => ((double)TotalNumberOfWins() / TotalNumberOfOccurences()) * 100;
+                return _occurancePercentages;
+            }
+        }
 
-        public double GetTiePercentage() => ((double)TotalNumberOfTies() / TotalNumberOfOccurences()) * 100;
+        public double WinPercentage
+        {
+            get
+            {
+                if (_winPercentage == null)
+                {
+                    _winPercentage = ((double)TotalNumberOfWins / TotalNumberOfOccurences) * 100;
+                }
 
-        private int TotalNumberOfOccurences() => NumberOfHandOccurences.Sum();
+                return _winPercentage.Value;
+            }
+        }
 
-        private int TotalNumberOfWins() => NumberOfWins.Sum();
+        public double TiePercentage
+        {
+            get
+            {
+                if (_tiePercentage == null)
+                {
+                    _tiePercentage = ((double)TotalNumberOfTies / TotalNumberOfOccurences) * 100;
+                }
 
-        private int TotalNumberOfTies() => NumberOfTies.Sum();
+                return _tiePercentage.Value;
+            }
+        }
 
-        private int TotalHandOccurances() => NumberOfHandOccurences.Sum();
+        public int TotalNumberOfOccurences
+        {
+            get
+            {
+                if(_totalNumberOfOccurences == null)
+                {
+                    _totalNumberOfOccurences = NumberOfHandOccurences.Sum();
+                }
+
+                return _totalNumberOfOccurences.Value;
+            }
+        }
+
+        public int TotalNumberOfWins
+        {
+            get
+            {
+                if (_totalNumberOfWins == null)
+                {
+                    _totalNumberOfWins = NumberOfWins.Sum();
+                }
+
+                return _totalNumberOfWins.Value;
+            }
+        }
+
+        public int TotalNumberOfTies
+        {
+            get
+            {
+                if (_totalNumberOfTies == null)
+                {
+                    _totalNumberOfTies = NumberOfTies.Sum();
+                }
+
+                return _totalNumberOfTies.Value;
+            }
+        }
+
     }
 }

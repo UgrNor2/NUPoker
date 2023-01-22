@@ -18,47 +18,20 @@ namespace NUPoker.Services.Engine.Concrete
             ValidateInput(deadCards, flopCard1, flopCard2, flopCard3, turnCard);
 
             List<int> availableCards = GetAvailableCards(deadCards, flopCard1, flopCard2, flopCard3, turnCard);
-            ulong notUseableCardsMask = CreateNotUseableCardsMask(deadCards, flopCard1, flopCard2, flopCard3, turnCard);
-
 
             if (flopCard3 == 52)
             {
-                for (flopCard1 = 0; flopCard1 < 48; flopCard1++)
+                for (flopCard1 = 0; flopCard1 < availableCards.Count - 4; flopCard1++)
                 {
-                    if ((notUseableCardsMask & Tables.CardMasksTable[flopCard1]) != 0)
+                    for (flopCard2 = flopCard1 + 1; flopCard2 < availableCards.Count - 3; flopCard2++)
                     {
-                        continue;
-                    }
-
-                    for (flopCard2 = flopCard1 + 1; flopCard2 < 49; flopCard2++)
-                    {
-                        if ((notUseableCardsMask & Tables.CardMasksTable[flopCard2]) != 0)
+                        for (flopCard3 = flopCard2 + 1; flopCard3 < availableCards.Count - 2; flopCard3++)
                         {
-                            continue;
-                        }
-
-                        for (flopCard3 = flopCard2 + 1; flopCard3 < 50; flopCard3++)
-                        {
-                            if ((notUseableCardsMask & Tables.CardMasksTable[flopCard3]) != 0)
+                            for (turnCard = flopCard3 + 1; turnCard < availableCards.Count - 1; turnCard++)
                             {
-                                continue;
-                            }
-
-                            for (turnCard = flopCard3 + 1; turnCard < 51; turnCard++)
-                            {
-                                if ((notUseableCardsMask & Tables.CardMasksTable[turnCard]) != 0)
+                                for (var riverCard = turnCard + 1; riverCard < availableCards.Count; riverCard++)
                                 {
-                                    continue;
-                                }
-
-                                for (var riverCard = turnCard + 1; riverCard < 52; riverCard++)
-                                {
-                                    if ((notUseableCardsMask & Tables.CardMasksTable[riverCard]) != 0)
-                                    {
-                                        continue;
-                                    }
-
-                                    yield return (flopCard1, flopCard2, flopCard3, turnCard, riverCard);
+                                    yield return (availableCards[flopCard1], availableCards[flopCard2], availableCards[flopCard3], availableCards[turnCard], availableCards[riverCard]);
                                 }
                             }
                         }
@@ -66,37 +39,22 @@ namespace NUPoker.Services.Engine.Concrete
                 }
             }
 
-            if (flopCard3 != 52 && turnCard == 52)
+            else if (flopCard3 != 52 && turnCard == 52)
             {
-                for (turnCard = 0; turnCard < 52; turnCard++)
+                for (turnCard = 0; turnCard < availableCards.Count - 1; turnCard++)
                 {
-                    if ((notUseableCardsMask & Tables.CardMasksTable[turnCard]) != 0)
+                    for (int riverCard = turnCard + 1; riverCard < availableCards.Count; riverCard++)
                     {
-                        continue;
-                    }
-
-                    for (int riverCard = turnCard + 1; riverCard < 52; riverCard++)
-                    {
-                        if ((notUseableCardsMask & Tables.CardMasksTable[riverCard]) != 0)
-                        {
-                            continue;
-                        }
-
-                        yield return (flopCard1, flopCard2, flopCard3, turnCard, riverCard);
+                        yield return (flopCard1, flopCard2, flopCard3, availableCards[turnCard], availableCards[riverCard]);
                     }
                 }
             }
 
-            if (turnCard != 52)
+            else if (turnCard != 52)
             {
-                for (int riverCard = turnCard + 1; riverCard < 52; riverCard++)
+                for (int riverCard = 0; riverCard < availableCards.Count; riverCard++)
                 {
-                    if ((notUseableCardsMask & Tables.CardMasksTable[riverCard]) != 0)
-                    {
-                        continue;
-                    }
-
-                    yield return (flopCard1, flopCard2, flopCard3, turnCard, riverCard);
+                    yield return (flopCard1, flopCard2, flopCard3, turnCard, availableCards[riverCard]);
                 }
             }
 
@@ -131,30 +89,6 @@ namespace NUPoker.Services.Engine.Concrete
             }
 
             return availableCards;
-        }
-
-        private ulong CreateNotUseableCardsMask(List<int> deadCards, int flopCard1, int flopCard2, int flopCard3, int turnCard)
-        {
-            ulong notUseableCardsMask = 0;
-
-            for (int i = 0; i < deadCards.Count; i++)
-            {
-                notUseableCardsMask |= Tables.CardMasksTable[deadCards[i]];
-
-                if (flopCard3 != 52)
-                {
-                    notUseableCardsMask |= Tables.CardMasksTable[flopCard1];
-                    notUseableCardsMask |= Tables.CardMasksTable[flopCard2];
-                    notUseableCardsMask |= Tables.CardMasksTable[flopCard3];
-
-                    if (turnCard != 52)
-                    {
-                        notUseableCardsMask |= Tables.CardMasksTable[turnCard];
-                    }
-                }
-            }
-
-            return notUseableCardsMask;
         }
     }
 }

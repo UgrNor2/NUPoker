@@ -11,6 +11,13 @@ namespace NUPoker.Services.Engine.Concrete
         private const int FIRST_CARD_SHIFT = 16;
         private const int SECOND_CARD_SHIFT = 12;
         private const int THIRD_CARD_SHIFT = 8;
+        
+        private readonly ICardValidator _cardValidator;
+
+        public HandService(ICardValidator cardValidator)
+        {
+            _cardValidator = cardValidator;
+        }
 
         public ulong CreateHand(int myCard1, int myCard2, int flopCard1, int flopCard2, int flopCard3, int turnCard = 52, int riverCard = 52)
         {
@@ -27,26 +34,13 @@ namespace NUPoker.Services.Engine.Concrete
 
         private void ValidateInput(int myCard1, int myCard2, int flopCard1, int flopCard2, int flopCard3, int turnCard, int riverCard)
         {
-            ThrowArgumentExceptionIfCardIsOutOfRange(myCard1, nameof(myCard1));
-            ThrowArgumentExceptionIfCardIsOutOfRange(myCard2, nameof(myCard2));
-            ThrowArgumentExceptionIfCardIsOutOfRange(flopCard1, nameof(flopCard1));
-            ThrowArgumentExceptionIfCardIsOutOfRange(flopCard2, nameof(flopCard2));
-            ThrowArgumentExceptionIfCardIsOutOfRange(flopCard3, nameof(flopCard3));
-            ThrowArgumentExceptionIfCardIsOutOfRange(turnCard, nameof(turnCard), true);
-            ThrowArgumentExceptionIfCardIsOutOfRange(riverCard, nameof(riverCard), true);
-
-            if (turnCard == 52 && riverCard != 52)
-            {
-                throw new ArgumentException($"{nameof(turnCard)} cannot be empty when {nameof(riverCard)} is not empty.");
-            }
-        }
-
-        private void ThrowArgumentExceptionIfCardIsOutOfRange(int card, string paramName, bool canBeEmpty = false)
-        {
-            if (card < 0 || (canBeEmpty && card > 52) || (!canBeEmpty && card > 51))
-            {
-                throw new ArgumentException($"{paramName} is out of range.", paramName);
-            }
+            _cardValidator.ThrowArgumentExceptionIfCardIsOutOfRange(myCard1, nameof(myCard1));
+            _cardValidator.ThrowArgumentExceptionIfCardIsOutOfRange(myCard2, nameof(myCard2));
+            _cardValidator.ThrowArgumentExceptionIfCardIsOutOfRange(flopCard1, nameof(flopCard1));
+            _cardValidator.ThrowArgumentExceptionIfCardIsOutOfRange(flopCard2, nameof(flopCard2));
+            _cardValidator.ThrowArgumentExceptionIfCardIsOutOfRange(flopCard3, nameof(flopCard3));
+            _cardValidator.ThrowArgumentExceptionIfCardIsOutOfRange(turnCard, nameof(turnCard), riverCard == 52);
+            _cardValidator.ThrowArgumentExceptionIfCardIsOutOfRange(riverCard, nameof(riverCard), true);
         }
 
         public uint GetHandRank(ulong hand)
@@ -73,8 +67,6 @@ namespace NUPoker.Services.Engine.Concrete
 
         private static uint GetHandRank(uint numberOfDifferentRanks, uint numberOfDuplications, uint spadeHand, uint heartHand, uint clubHand, uint diamondHand, uint ranks)
         {
-            uint retVal = 0;
-
             if(numberOfDifferentRanks >= 5)
             {
                 if (Tables.NumberOfBitsTable[spadeHand] >= 5)

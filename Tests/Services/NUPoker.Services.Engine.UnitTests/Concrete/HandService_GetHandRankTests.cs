@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using NUPoker.Services.Engine.Concrete;
 using NUPoker.Services.Engine.Data;
+using NUPoker.Services.Engine.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,9 +14,25 @@ namespace NUPoker.Services.Engine.UnitTests.Concrete
     [TestClass]
     public class HandService_GetHandRankTests
     {
+        private MockRepository _mockRepository = new MockRepository(MockBehavior.Strict);
+        private Mock<ICardValidator> _cardValidator = new Mock<ICardValidator>();
+
+        [TestInitialize]
+        public void Init()
+        {
+            _mockRepository = new MockRepository(MockBehavior.Loose);
+            _cardValidator = _mockRepository.Create<ICardValidator>();
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            _mockRepository.Verify();
+        }
+
         private HandService CreateHandService()
         {
-            return new HandService();
+            return new HandService(_cardValidator.Object);
         }
 
         [TestMethod]

@@ -16,7 +16,7 @@ namespace NUPoker.Services.Engine.IntegrationTests.Concrete
         {
             // Given
             // When
-            var calculator = new OddsCalculator(new HandService(), new CardValidator(), new BoardEnumerator(new CardValidator()));
+            var calculator = new OddsCalculator(new HandService(new CardValidator()), new CardValidator(), new BoardEnumerator(new CardValidator()));
             var odds = calculator.GetOdds(input.PlayerCards.Select(i => ((int)i.Item1, (int)i.Item2)).ToList(), (int)input.FlopCard1, (int)input.FlopCard2, (int)input.FlopCard3, (int)input.TurnCard);
 
             // Then
@@ -33,16 +33,16 @@ namespace NUPoker.Services.Engine.IntegrationTests.Concrete
 
             for (int i = 0; i < input.PlayerCards.Count; i++)
             {
-                Assert.AreEqual(input.ExpectedResult[i].WinPercentage, Math.Round(odds.PlayerOddsResults[i].GetWinPercentage(), 2));
-                Assert.AreEqual(input.ExpectedResult[i].TiePercentage, Math.Round(odds.PlayerOddsResults[i].GetTiePercentage(), 2));
+                Assert.AreEqual(input.ExpectedResult[i].WinPercentage, Math.Round(odds.PlayerOddsResults[i].WinPercentage, 2));
+                Assert.AreEqual(input.ExpectedResult[i].TiePercentage, Math.Round(odds.PlayerOddsResults[i].TiePercentage, 2));
 
                 if (input.ExpectedResult[i].RankOccurence != null)
                 {
-                    var occurancePercentages = odds.PlayerOddsResults[i].GetOccurancePercentages();
+                    var occurancePercentages = odds.PlayerOddsResults[i].OccurancePercentages;
 
-                    for (int r = 0; r < input.ExpectedResult[i].RankOccurence.Length; r++)
+                    for (int r = 0; r < input.ExpectedResult[i].RankOccurence?.Length; r++)
                     {
-                        Assert.AreEqual(input.ExpectedResult[i].RankOccurence[r], Math.Round(occurancePercentages[r], 2));
+                        Assert.AreEqual(input.ExpectedResult[i].RankOccurence?[r], Math.Round(occurancePercentages[r], 2));
                     }
                 }
             }
@@ -195,6 +195,7 @@ namespace NUPoker.Services.Engine.IntegrationTests.Concrete
 
         public class GetOddsTestInput
         {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
             public List<(Cards, Cards)> PlayerCards { get; init; }
 
             public Cards FlopCard1 { get; init; }
@@ -210,7 +211,7 @@ namespace NUPoker.Services.Engine.IntegrationTests.Concrete
             public int? ExpectedNumberOfPlayers { get; init; }
 
             public int? ExpectedNumberOfCases { get; init; }
-
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
             public class ExpectedPlayerOdds
             {

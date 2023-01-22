@@ -16,5 +16,13 @@ namespace NUPoker.Services.Engine.Concrete
                 throw new ArgumentException($"{card} is not a card value.");
             }
         }
+
+        public void ThrowArgumentExceptionIfCardIsOutOfRange(int card, string paramName, bool canBeEmpty = false)
+        {
+            if (card < 0 || (canBeEmpty && card > 52) || (!canBeEmpty && card > 51))
+            {
+                throw new ArgumentException($"{paramName} is out of range.", paramName);
+            }
+        }
     }
 }
